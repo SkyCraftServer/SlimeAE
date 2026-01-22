@@ -12,7 +12,6 @@ import io.github.thebusybiscuit.slimefun4.utils.ChestMenuUtils;
 import io.github.thebusybiscuit.slimefun4.utils.SlimefunUtils;
 import java.util.*;
 import javax.annotation.Nonnull;
-import me.ddggdd135.guguslimefunlib.api.AEMenu;
 import me.ddggdd135.guguslimefunlib.libraries.colors.CMIChatColor;
 import me.ddggdd135.slimeae.SlimeAEPlugin;
 import me.ddggdd135.slimeae.api.autocraft.AutoCraftingTask;
@@ -134,7 +133,7 @@ public class MECraftPlanningTerminal extends METerminal {
             return;
         }
         player.closeInventory();
-        player.sendMessage(CMIChatColor.translate("&e输入合成数量"));
+        player.sendMessage(CMIChatColor.translate("&e输入合成数量 &c(请注意:输入后将立即合成无法取消,建议提前计算好所需数量)"));
         ChatUtils.awaitInput(player, msg -> {
             if (!SlimeAEPlugin.getNetworkData().AllNetworkData.contains(info)) return;
             Bukkit.getScheduler().runTaskAsynchronously(SlimeAEPlugin.getInstance(), () -> {
@@ -152,35 +151,14 @@ public class MECraftPlanningTerminal extends METerminal {
 
                     AutoCraftingTask task = new AutoCraftingTask(info, recipeEntry.getRecipe(), amount);
                     Bukkit.getScheduler().runTask(SlimeAEPlugin.getInstance(), () -> {
-                        task.refreshGUI(45, false);
-                        AEMenu menu = task.getMenu();
-                        int[] borders = new int[] {45, 46, 48, 49, 50, 52, 53};
-                        int acceptSlot = 47;
-                        int cancelSlot = 51;
-                        for (int slot1 : borders) {
-                            menu.replaceExistingItem(slot1, ChestMenuUtils.getBackground());
-                            menu.addMenuClickHandler(slot1, ChestMenuUtils.getEmptyClickHandler());
-                        }
-                        menu.replaceExistingItem(acceptSlot, MenuItems.ACCEPT);
-                        menu.addMenuClickHandler(acceptSlot, (p, s, itemStack1, action) -> {
-                            if (info.getAutoCraftingSessions().size() >= NetworkInfo.getMaxCraftingSessions()) {
-                                player.sendMessage(CMIChatColor.translate(
-                                        "&c&l这个网络已经有" + NetworkInfo.getMaxCraftingSessions() + "个合成任务了"));
-                                task.dispose();
-                                return false;
-                            }
-                            player.sendMessage(CMIChatColor.translate("&a&l成功规划了合成任务"));
-                            task.refreshGUI(54, false);
-                            task.start();
-                            return false;
-                        });
-                        menu.replaceExistingItem(cancelSlot, MenuItems.CANCEL);
-                        menu.addMenuClickHandler(cancelSlot, (p, s, itemStack1, action) -> {
-                            player.closeInventory();
+                        if (info.getAutoCraftingSessions().size() >= NetworkInfo.getMaxCraftingSessions()) {
+                            player.sendMessage(CMIChatColor.translate(
+                                    "&c&l这个网络已经有" + NetworkInfo.getMaxCraftingSessions() + "个合成任务了"));
                             task.dispose();
-                            return false;
-                        });
-                        menu.open(player);
+                            return;
+                        }
+                        player.sendMessage(CMIChatColor.translate("&a&l成功规划了合成任务"));
+                        task.start();
                     });
                 } catch (NumberFormatException e) {
                     player.sendMessage(CMIChatColor.translate("&c&l无效的数字"));
